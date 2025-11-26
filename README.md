@@ -26,7 +26,7 @@ The script uses some specific tools, which you can install thus:
 sudo apt update
 
 # Install required packages
-# (you probably alreay have all of them except maybe smartmontools)
+# (you probably alreday have all of them except maybe smartmontools)
 sudo apt install -y util-linux smartmontools findutils coreutils
 
 # Verify installations
