@@ -231,6 +231,6 @@ echo
 echo "***********************************"
 echo "All reports completed successfully."
 echo "Location: $UUID_DIR"
-echo "Accessible as: "$PWD/$LINKNAME")"
+echo "Accessible as: "$PWD/$LINKNAME""
 ls -lh "$LINKNAME/"
 echo "***********************************"
