@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+
+# Drive information script
+# Authors:
+#  ChatGPT
+#  GitHub Copilot
+#  Scott Gilbertson https://github.com/sgilbertson
+
 set -euo pipefail
 
 REPORTS_DIR="reports"
@@ -58,6 +65,11 @@ echo "Using disk unique ID: $DISK_UNIQUE_ID"
 UUID_DIR="$REPORTS_DIR/$DISK_UNIQUE_ID"
 mkdir -p "$UUID_DIR"
 
+echo
+echo "Create a symlink to this report directory for easier access."
+echo "For example, the name you pick could be on a sticker on the drive."
+echo "It will link to $UUID_DIR,"
+echo "which I think you'll agree is difficult to remember."
 echo
 read -rp "Enter a symlink name for this drive: " LINKNAME
 ln -sfn "$UUID_DIR" "$LINKNAME"
@@ -181,38 +193,44 @@ for PART in $PARTS; do
 
     # --- All directories ---
     progress_msg "  Counting directories…"
-    DIRCOUNT=$(find "$P_MOUNT" -type d 2>/dev/null | wc -l)
+    DIRCOUNT=$(sudo find "$P_MOUNT" -xdev -type d 2>/dev/null | wc -l)
     progress_done "  $DIRCOUNT directories detected"
 
     progress_msg "  Scanning all directories… 0 / $DIRCOUNT"
     # Open fd 3 for writing to the file
     exec 3> "$UUID_DIR/partition_${PARTNUM}_all_dirs.txt"
     COUNT=0
-    find "$P_MOUNT" -type d 2>/dev/null | while read -r d; do
+    sudo find "$P_MOUNT" -xdev -type d 2>/dev/null | while read -r d; do
         COUNT=$((COUNT+1))
         echo "$d" >&3
         progress_msg "  Scanning all directories… $COUNT / $DIRCOUNT"
     done
+    exec 3>&-
     progress_done "  Directory scan completed ($DIRCOUNT dirs)"
 
     # --- All files ---
     progress_msg "  Counting files…"
-    FILECOUNT=$(find "$P_MOUNT" -type f 2>/dev/null | wc -l)
+    FILECOUNT=$(sudo find "$P_MOUNT" -xdev -type f 2>/dev/null | wc -l)
     progress_done "  $FILECOUNT files detected"
 
     progress_msg "  Scanning all files… 0 / $FILECOUNT"
     # Open fd 3 for writing to the file
     exec 3> "$UUID_DIR/partition_${PARTNUM}_all_files.txt"
     COUNT=0
-    find "$P_MOUNT" -type f 2>/dev/null | while read -r f; do
+    sudo find "$P_MOUNT" -xdev -type f 2>/dev/null | while read -r f; do
         COUNT=$((COUNT+1))
         echo "$f" >&3
         progress_msg "  Scanning all files… $COUNT / $FILECOUNT"
     done
+    exec 3>&-
     progress_done "  File scan completed ($FILECOUNT files)"
 
 done
 
 echo
+echo "***********************************"
 echo "All reports completed successfully."
 echo "Location: $UUID_DIR"
+echo "Accessible as: "$PWD/$LINKNAME")"
+ls -lh "$LINKNAME/"
+echo "***********************************"
