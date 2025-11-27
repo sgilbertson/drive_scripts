@@ -65,25 +65,44 @@ echo "Using disk unique ID: $DISK_UNIQUE_ID"
 UUID_DIR="$REPORTS_DIR/$DISK_UNIQUE_ID"
 mkdir -p "$UUID_DIR"
 
-echo
-echo "Create a symlink to this report directory for easier access."
-echo "For example, the name you pick could be on a sticker on the drive."
-echo "It will link to $UUID_DIR,"
-echo "which I think you'll agree is difficult to remember."
-echo
-read -rp "Enter a symlink name for this drive: " LINKNAME
-ln -sfn "$UUID_DIR" "$LINKNAME"
+########################################
+# Symlink Creation for ease of access
+########################################
+
+EXISTING_LINK=$(find . -maxdepth 1 -type l -lname "$UUID_DIR" | head -n 1 || true)
+if [ -n "$EXISTING_LINK" ]; then
+    echo
+    echo "A symlink to this report directory already exists: $EXISTING_LINK"
+    echo "Skipping symlink creation."
+    LINKNAME=$(basename "$EXISTING_LINK")
+else
+    echo
+    echo "Report data will be written to $UUID_DIR."
+    echo "For easier access, provide a name that is meaningful for the particular drive."
+    echo "Later you will be able to access the report data via that name."
+    echo 'For example you might name a drive "backup", "photos" or "system".'
+    echo
+    while true; do
+        read -rp "Enter a name for this drive: " LINKNAME
+        if [ -e "$LINKNAME" ]; then
+            echo
+            echo "Error: A file or directory named '$LINKNAME' already exists. Please choose a different name."
+            echo
+        else
+            break
+        fi
+    done
+
+fi
+
+########################################
+# General Disk Info
+########################################
 
 echo
 echo "Documenting disk: $DISK"
 echo "Output directory: $UUID_DIR"
 echo
-
-DATESTAMP=$(date +"%Y-%m-%d")
-
-########################################
-# General Disk Info
-########################################
 
 show_step "Collecting general disk info"
 
@@ -123,6 +142,7 @@ progress_done "Full SMART report collected"
     echo "$SMART_HEALTH"
 } > "$UUID_DIR/smart_health.txt"
 
+DATESTAMP=$(date +"%Y-%m-%d")
 {
     echo "SMART Full Report for $DISK"
     echo "Generated: $(date)"
