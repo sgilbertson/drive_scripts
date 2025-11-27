@@ -9,6 +9,13 @@ The idea is to install a drive in a USB or SATA dock, and run the tool, perhaps 
 
 It prompts with a list of available drives, and asks you to select one.
 The first time you run it on a given drive it also asks you for a name, which it uses in a symbolic link to the generated reports for that drive.
+If you subsequently scan the same drive it uses the same symbolic link, so you can always access reports for the drive by that name.
+
+Choose a name that will help you remember which drive you scanned.
+For example, if you scan your system drive, you might call it "system", and if you have three backup drives, you might call them
+"backup 1", "backup 2" and "backup 3".
+You may want to put a label on the drive with that name.
+
 The name of the actual report directory (under "reports") is a non-memorable unique ID.
 
 ## A.I.-generated Overview

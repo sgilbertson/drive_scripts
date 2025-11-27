@@ -220,10 +220,14 @@ for PART in $PARTS; do
     # Open fd 3 for writing to the file
     exec 3> "$UUID_DIR/partition_${PARTNUM}_all_dirs.txt"
     COUNT=0
+    SECONDS_AT_PRINT=0 # not $SECONDS, so that we'll print on first iteration
     sudo find "$P_MOUNT" -xdev -type d 2>/dev/null | while read -r d; do
         COUNT=$((COUNT+1))
         echo "$d" >&3
-        progress_msg "  Scanning all directories… $COUNT / $DIRCOUNT"
+        if [ $((SECONDS - SECONDS_AT_PRINT)) -ge 1 ] || [ $COUNT -eq 1 ]; then
+            SECONDS_AT_PRINT=$SECONDS
+            progress_msg "  Scanning all directories… $COUNT / $DIRCOUNT"
+        fi
     done
     exec 3>&-
     progress_done "  Directory scan completed ($DIRCOUNT dirs)"
@@ -237,10 +241,14 @@ for PART in $PARTS; do
     # Open fd 3 for writing to the file
     exec 3> "$UUID_DIR/partition_${PARTNUM}_all_files.txt"
     COUNT=0
+    SECONDS_AT_PRINT=0 # not $SECONDS, so that we'll print on first iteration
     sudo find "$P_MOUNT" -xdev -type f 2>/dev/null | while read -r f; do
         COUNT=$((COUNT+1))
         echo "$f" >&3
-        progress_msg "  Scanning all files… $COUNT / $FILECOUNT"
+        if [ $((SECONDS - SECONDS_AT_PRINT)) -ge 1 ] || [ $COUNT -eq 1 ]; then
+            SECONDS_AT_PRINT=$SECONDS
+            progress_msg "  Scanning all files… $COUNT / $FILECOUNT"
+        fi
     done
     exec 3>&-
     progress_done "  File scan completed ($FILECOUNT files)"
