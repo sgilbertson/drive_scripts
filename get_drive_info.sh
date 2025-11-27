@@ -8,6 +8,9 @@
 
 set -euo pipefail
 
+# Number of seconds to allow for directory/file counting before timing out.
+TIMEOUT_SECONDS=60
+
 REPORTS_DIR="reports"
 mkdir -p "$REPORTS_DIR"
 
@@ -213,7 +216,13 @@ for PART in $PARTS; do
 
     # --- All directories ---
     progress_msg "  Counting directories…"
-    DIRCOUNT=$(sudo find "$P_MOUNT" -xdev -type d 2>/dev/null | wc -l)
+    if timeout $TIMEOUT_SECONDS sudo find "$P_MOUNT" -xdev -type d 2>/dev/null > /tmp/dircount_$$.tmp; then
+        DIRCOUNT=$(wc -l < /tmp/dircount_$$.tmp)
+        rm -f /tmp/dircount_$$.tmp
+    else
+        DIRCOUNT="TOO MANY TO COUNT"
+        rm -f /tmp/dircount_$$.tmp
+    fi
     progress_done "  $DIRCOUNT directories detected"
 
     progress_msg "  Scanning all directories… 0 / $DIRCOUNT"
@@ -234,7 +243,13 @@ for PART in $PARTS; do
 
     # --- All files ---
     progress_msg "  Counting files…"
-    FILECOUNT=$(sudo find "$P_MOUNT" -xdev -type f 2>/dev/null | wc -l)
+    if timeout $TIMEOUT_SECONDS sudo find "$P_MOUNT" -xdev -type f 2>/dev/null > /tmp/filecount_$$.tmp; then
+        FILECOUNT=$(wc -l < /tmp/filecount_$$.tmp)
+        rm -f /tmp/filecount_$$.tmp
+    else
+        FILECOUNT="TOO MANY TO COUNT"
+        rm -f /tmp/filecount_$$.tmp
+    fi
     progress_done "  $FILECOUNT files detected"
 
     progress_msg "  Scanning all files… 0 / $FILECOUNT"
