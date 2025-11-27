@@ -92,7 +92,7 @@ else
             break
         fi
     done
-
+    ln -sfn "$UUID_DIR" "$LINKNAME"
 fi
 
 ########################################
