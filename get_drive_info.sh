@@ -70,18 +70,19 @@ mkdir -p "$UUID_DIR"
 ########################################
 
 EXISTING_LINK=$(find . -maxdepth 1 -type l -lname "$UUID_DIR" | head -n 1 || true)
+echo
+echo "Report data will be written to $UUID_DIR."
+echo "For easier access, provide a name that is meaningful for the particular drive."
+echo "Later you will be able to access the report data via that name."
+echo 'For example you might name a drive "backup", "photos" or "system".'
+echo
 if [ -n "$EXISTING_LINK" ]; then
     echo
-    echo "A symlink to this report directory already exists: $EXISTING_LINK"
-    echo "Skipping symlink creation."
+    echo "A link to this report directory already exists: $EXISTING_LINK"
+    read -rp "Press Enter to use that name '$EXISTING_LINK', or Ctrl+C to abort: "
     LINKNAME=$(basename "$EXISTING_LINK")
+    echo
 else
-    echo
-    echo "Report data will be written to $UUID_DIR."
-    echo "For easier access, provide a name that is meaningful for the particular drive."
-    echo "Later you will be able to access the report data via that name."
-    echo 'For example you might name a drive "backup", "photos" or "system".'
-    echo
     while true; do
         read -rp "Enter a name for this drive: " LINKNAME
         if [ -e "$LINKNAME" ]; then
@@ -99,7 +100,6 @@ fi
 # General Disk Info
 ########################################
 
-echo
 echo "Documenting disk: $DISK"
 echo "Output directory: $UUID_DIR"
 echo

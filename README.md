@@ -39,3 +39,57 @@ sudo apt install -y util-linux smartmontools findutils coreutils
 # Verify installations
 dpkg -l | grep -E 'util-linux|smartmontools|findutils|coreutils'
 ```
+
+## If you find that two drives have the same "unique" ID
+
+If you clone a drive, then later modify one of the two drives, they'll both have the same supposedly-unique ID.
+To fix that, install one of the drives, and figure out which partition table type it has:
+
+```sh
+# substitute the actual device name for /dev/sdX
+sudo blkid -s PTTYPE -o value /dev/sdX
+```
+
+**Warning:** Double-check that you have the correct device name before running the commands below, as they will modify the drive's partition table UUID.
+
+If it reports that it's a GPT partition table, generate a new random PTUUID:
+
+```sh
+# substitute the actual device name for /dev/sdX
+sudo sgdisk --disk-guid=R /dev/sdX
+```
+
+If it reports that it's a DOS or MBR table, generate a new random ID.
+
+**DO NOT TRUST THIS METHOD** - I did this, and wound up with a corrupt partition table, which I had to repair using `testdisk`.
+
+```sh
+# substitute the actual device name for /dev/sdX
+sudo sfdisk --disk-id /dev/sdX $(uuidgen | cut -c1-8)
+# If it prints this error message, that's normal and acceptable:
+#  Re-reading the partition table failed.: Device or resource busy
+# It just means the OS will be using the old ID until you unmount and re-mount the drive.
+```
+
+This is likely to be a better method, but I haven't tried it yet:
+
+```sh
+# Replace with a safe unique ID (4 bytes from urandom)
+ID=$(od -An -N4 -tx1 /dev/urandom | tr -d ' \n')
+echo "New Disk ID: $ID"
+
+# Patch only the 4 bytes at offset 0x1B8 (decimal 440)
+echo -ne "\\x${ID:6:2}\\x${ID:4:2}\\x${ID:2:2}\\x${ID:0:2}" | \
+  sudo dd of=/dev/sdX bs=1 seek=440 count=4 conv=notrunc
+```
+
+That's based on the standard DOS MBR Layout (512 bytes total):
+
+| Offset  | Size | Description                                     |
+| ------- | ---- | ----------------------------------------------- |
+| `0x000` | 446  | Bootstrap code area                             |
+| `0x1B8` | 4    | **Disk signature / ID** (used by Windows, etc.) |
+| `0x1BC` | 2    | Usually zero or unused                          |
+| `0x1BE` | 64   | Partition table entries (4×16 bytes each)       |
+| `0x1FE` | 2    | MBR signature (must be `0x55AA`)                |
+
