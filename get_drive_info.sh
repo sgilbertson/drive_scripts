@@ -8,9 +8,6 @@
 
 set -euo pipefail
 
-# Number of seconds to allow for directory/file counting before timing out.
-TIMEOUT_SECONDS=60
-
 REPORTS_DIR="reports"
 mkdir -p "$REPORTS_DIR"
 
@@ -215,17 +212,8 @@ for PART in $PARTS; do
     progress_done "  Top-level directories listed"
 
     # --- All directories ---
-    progress_msg "  Counting directories…"
-    if timeout $TIMEOUT_SECONDS sudo find "$P_MOUNT" -xdev -type d 2>/dev/null > /tmp/dircount_$$.tmp; then
-        DIRCOUNT=$(wc -l < /tmp/dircount_$$.tmp)
-        rm -f /tmp/dircount_$$.tmp
-    else
-        DIRCOUNT="TOO MANY TO COUNT"
-        rm -f /tmp/dircount_$$.tmp
-    fi
-    progress_done "  $DIRCOUNT directories detected"
 
-    progress_msg "  Scanning all directories… 0 / $DIRCOUNT"
+    progress_msg "  Scanning all directories… 0"
     # Open fd 3 for writing to the file
     exec 3> "$UUID_DIR/partition_${PARTNUM}_all_dirs.txt"
     COUNT=0
@@ -235,24 +223,15 @@ for PART in $PARTS; do
         echo "$d" >&3
         if [ $((SECONDS - SECONDS_AT_PRINT)) -ge 1 ] || [ $COUNT -eq 1 ]; then
             SECONDS_AT_PRINT=$SECONDS
-            progress_msg "  Scanning all directories… $COUNT / $DIRCOUNT"
+            progress_msg "  Scanning all directories… $COUNT"
         fi
     done
     exec 3>&-
-    progress_done "  Directory scan completed ($DIRCOUNT dirs)"
+    progress_done "  Directory scan completed ($COUNT dirs)"
 
     # --- All files ---
-    progress_msg "  Counting files…"
-    if timeout $TIMEOUT_SECONDS sudo find "$P_MOUNT" -xdev -type f 2>/dev/null > /tmp/filecount_$$.tmp; then
-        FILECOUNT=$(wc -l < /tmp/filecount_$$.tmp)
-        rm -f /tmp/filecount_$$.tmp
-    else
-        FILECOUNT="TOO MANY TO COUNT"
-        rm -f /tmp/filecount_$$.tmp
-    fi
-    progress_done "  $FILECOUNT files detected"
 
-    progress_msg "  Scanning all files… 0 / $FILECOUNT"
+    progress_msg "  Scanning all files… 0"
     # Open fd 3 for writing to the file
     exec 3> "$UUID_DIR/partition_${PARTNUM}_all_files.txt"
     COUNT=0
@@ -262,11 +241,11 @@ for PART in $PARTS; do
         echo "$f" >&3
         if [ $((SECONDS - SECONDS_AT_PRINT)) -ge 1 ] || [ $COUNT -eq 1 ]; then
             SECONDS_AT_PRINT=$SECONDS
-            progress_msg "  Scanning all files… $COUNT / $FILECOUNT"
+            progress_msg "  Scanning all files… $COUNT"
         fi
     done
     exec 3>&-
-    progress_done "  File scan completed ($FILECOUNT files)"
+    progress_done "  File scan completed ($COUNT files)"
 
 done
 
