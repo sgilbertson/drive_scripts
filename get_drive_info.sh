@@ -179,6 +179,10 @@ for PART in $PARTS; do
     P_MOUNT=$(lsblk -no MOUNTPOINT "$PART" 2>/dev/null || sudo lsblk -no MOUNTPOINT "$PART")
     P_SIZE=$(lsblk -no SIZE "$PART" 2>/dev/null || sudo lsblk -no SIZE "$PART")
 
+    ########################################
+    # Record Basic Partition Info
+    ########################################
+
     INFO_FILE="$UUID_DIR/partition_${PARTNUM}_info.txt"
 
     {
@@ -210,6 +214,11 @@ for PART in $PARTS; do
     progress_msg "  Listing top-level directories…"
     ls -1 "$P_MOUNT" > "$UUID_DIR/partition_${PARTNUM}_top_level_dirs.txt" 2>/dev/null || true
     progress_done "  Top-level directories listed"
+
+    # --- Top-level full directory in descending date order ---
+    progress_msg "  Listing top-level directories (detailed)…"
+    ls -1ath "$P_MOUNT" > "$UUID_DIR/partition_${PARTNUM}_top_level_files_by_date.txt" 2>/dev/null || true
+    progress_done "  Top-level detailed directory listed"
 
     # --- All directories ---
 
