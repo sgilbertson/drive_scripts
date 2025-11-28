@@ -217,7 +217,7 @@ for PART in $PARTS; do
 
     # --- Top-level full directory in descending date order ---
     progress_msg "  Listing top-level directories (detailed)…"
-    ls -1ath "$P_MOUNT" > "$UUID_DIR/partition_${PARTNUM}_top_level_files_by_date.txt" 2>/dev/null || true
+    ls -lath "$P_MOUNT" > "$UUID_DIR/partition_${PARTNUM}_top_level_files_by_date.txt" 2>/dev/null || true
     progress_done "  Top-level detailed directory listed"
 
     # --- All directories ---
