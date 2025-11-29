@@ -17,7 +17,7 @@ mkdir -p "$REPORTS_DIR"
 # CSV Header
 ######################################## 
 
-echo "Name,Disk Model,Disk Serial,Disk Size,Disk PTUUID,Overall Health,Number of Partitions,Partition Details" > "$OUTPUT_CSV"
+echo "Name,Disk Model,Disk Serial,Disk Size,Last Modified,Disk PTUUID,Overall Health,Number of Partitions,Partition Details" > "$OUTPUT_CSV"
 
 ########################################
 # Process Each Drive
@@ -44,6 +44,20 @@ for LINK in *; do
         
         DISK_PTUUID=$(basename "$DRIVE_DIR")
         
+        # Get most recent year from top-level file listings across all partitions
+        LAST_MODIFIED="0"
+        for TOP_LEVEL in "$DRIVE_DIR"/partition_*_top_level_files_by_date.txt; do
+            if [ -f "$TOP_LEVEL" ]; then
+                # Extract years from the listing (handles formats like "Nov 29  2025" or "Nov 29 12:34")
+                YEAR=$(awk '{for(i=1;i<=NF;i++) if($i ~ /^[0-9]{4}$/) print $i}' "$TOP_LEVEL" | head -1)
+                if [ -n "$YEAR" ]; then
+                    if [ "$LAST_MODIFIED" = "0" ] || [ "$YEAR" -gt "$LAST_MODIFIED" ]; then
+                        LAST_MODIFIED="$YEAR"
+                    fi
+                fi
+            fi
+        done
+        
         # Get most recent SMART report
         LATEST_SMART=$(ls -t "$DRIVE_DIR"/smart_report_*.txt 2>/dev/null | head -1)
         if [ -n "$LATEST_SMART" ]; then
@@ -69,7 +83,7 @@ for LINK in *; do
         done
         PARTITION_DETAILS=${PARTITION_DETAILS%; } # Remove trailing semicolon and space
         
-        echo "\"$LINK_NAME\",\"$DISK_MODEL\",\"$DISK_SERIAL\",\"$DISK_SIZE\",\"$DISK_PTUUID\",\"$OVERALL_HEALTH\",\"$NUM_PARTITIONS\",\"$PARTITION_DETAILS\"" >> "$OUTPUT_CSV"
+        echo "\"$LINK_NAME\",\"$DISK_MODEL\",\"$DISK_SERIAL\",\"$DISK_SIZE\",\"$LAST_MODIFIED\",\"$DISK_PTUUID\",\"$OVERALL_HEALTH\",\"$NUM_PARTITIONS\",\"$PARTITION_DETAILS\"" >> "$OUTPUT_CSV"
     fi
 done
 
