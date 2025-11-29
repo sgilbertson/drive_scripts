@@ -253,7 +253,8 @@ for PART in $PARTS; do
         fi
     done
     exec 3>&-
-    progress_done "  Directory scan completed ($COUNT dirs)"
+    DIRCOUNT=$(wc -l < "$UUID_DIR/partition_${PARTNUM}_all_dirs.txt")
+    progress_done "  Directory scan completed ($DIRCOUNT dirs)"
 
     # --- All files ---
 
@@ -271,7 +272,8 @@ for PART in $PARTS; do
         fi
     done
     exec 3>&-
-    progress_done "  File scan completed ($COUNT files)"
+    FILECOUNT=$(wc -l < "$UUID_DIR/partition_${PARTNUM}_all_files.txt")
+    progress_done "  File scan completed ($FILECOUNT files)"
 
 done
 
