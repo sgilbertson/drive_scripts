@@ -29,9 +29,19 @@ for LINK in *; do
         LINK_NAME="$LINK"
         
         # Extract info from general_disk_info.txt
+        # Try regular drives first, then NVMe format
         DISK_MODEL=$(grep "Device Model:" "$DRIVE_DIR/general_disk_info.txt" | head -1 | awk -F: '{print $2}' | xargs || echo "")
+        if [ -z "$DISK_MODEL" ]; then
+            DISK_MODEL=$(grep "Model Number:" "$DRIVE_DIR/general_disk_info.txt" | head -1 | awk -F: '{print $2}' | xargs || echo "")
+        fi
+        
         DISK_SERIAL=$(grep "Serial Number:" "$DRIVE_DIR/general_disk_info.txt" | head -1 | awk -F: '{print $2}' | xargs || echo "")
+        
         DISK_SIZE=$(grep "User Capacity:" "$DRIVE_DIR/general_disk_info.txt" | head -1 | awk -F: '{print $2}' | sed 's/.*\[\(.*\)\]/\1/' | xargs || echo "")
+        if [ -z "$DISK_SIZE" ]; then
+            DISK_SIZE=$(grep "Total NVM Capacity:" "$DRIVE_DIR/general_disk_info.txt" | head -1 | awk -F: '{print $2}' | sed 's/.*\[\(.*\)\]/\1/' | xargs || echo "")
+        fi
+        
         DISK_PTUUID=$(basename "$DRIVE_DIR")
         
         # Get most recent SMART report
