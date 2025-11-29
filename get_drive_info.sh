@@ -70,6 +70,7 @@ mkdir -p "$UUID_DIR"
 ########################################
 
 EXISTING_LINK=$(find . -maxdepth 1 -type l -lname "$UUID_DIR" | head -n 1 || true)
+SKIP_LENGTHY_OPERATIONS=0
 echo
 echo "Report data will be written to $UUID_DIR."
 echo "For easier access, provide a name that is meaningful for the particular drive."
@@ -82,6 +83,15 @@ if [ -n "$EXISTING_LINK" ]; then
     read -rp "Press Enter to use that name '$EXISTING_LINK', or Ctrl+C to abort: "
     LINKNAME=$(basename "$EXISTING_LINK")
     echo
+    echo "You have previously scanned this drive, and re-listing all"
+    echo "the directories and files may take a long time."
+    echo "Would you like to skip the lengthy directory and file scans?"
+    read -rp "Type 'y' to skip, or 'n' to re-scan: " SKIP_ANSWER
+    if [[ "$SKIP_ANSWER" == "y" || "$SKIP_ANSWER" == "Y" ]]; then
+        SKIP_LENGTHY_OPERATIONS=1
+        echo
+        echo "OK, we'll skip the lengthy directory and file scans."
+    fi
 else
     while true; do
         read -rp "Enter a name for this drive: " LINKNAME
@@ -220,6 +230,13 @@ for PART in $PARTS; do
     ls -lath "$P_MOUNT" > "$UUID_DIR/partition_${PARTNUM}_top_level_files_by_date.txt" 2>/dev/null || true
     progress_done "  Top-level detailed directory listed"
 
+    # If skipping lengthy operations, continue to next partition
+
+    if [ "$SKIP_LENGTHY_OPERATIONS" -eq 1 ]; then
+        echo "  Skipping lengthy directory scan as per user request."
+        continue
+    fi
+    
     # --- All directories ---
 
     progress_msg "  Scanning all directories… 0"
