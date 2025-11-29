@@ -93,3 +93,11 @@ That's based on the standard DOS MBR Layout (512 bytes total):
 | `0x1BE` | 64   | Partition table entries (4×16 bytes each)       |
 | `0x1FE` | 2    | MBR signature (must be `0x55AA`)                |
 
+# summarize.sh
+
+
+After running get_drive_info.sh on any number of drives, this script summarizes the results.
+It looks for all the symbolic links in the reports/ directory and creates a row in a csv file 
+for each drive, with key information such as disk model, serial number, size, health status, etc.
+
+The resulting file, `drive_summary.csv` can be imported into a spreadsheet or otherwise manipulated.
