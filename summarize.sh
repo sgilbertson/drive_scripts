@@ -17,7 +17,7 @@ mkdir -p "$REPORTS_DIR"
 # CSV Header
 ######################################## 
 
-echo "Disk Model,Disk Serial,Disk Size,Disk PTUUID,Overall Health,Number of Partitions,Partition Details" > "$OUTPUT_CSV"
+echo "Name,Disk Model,Disk Serial,Disk Size,Disk PTUUID,Overall Health,Number of Partitions,Partition Details" > "$OUTPUT_CSV"
 
 ########################################
 # Process Each Drive
@@ -26,11 +26,12 @@ echo "Disk Model,Disk Serial,Disk Size,Disk PTUUID,Overall Health,Number of Part
 for LINK in *; do
     if [ -L "$LINK" ]; then
         DRIVE_DIR="$(readlink -f "$LINK")"
+        LINK_NAME="$LINK"
         
         # Extract info from general_disk_info.txt
         DISK_MODEL=$(grep "Device Model:" "$DRIVE_DIR/general_disk_info.txt" | head -1 | awk -F: '{print $2}' | xargs || echo "")
         DISK_SERIAL=$(grep "Serial Number:" "$DRIVE_DIR/general_disk_info.txt" | head -1 | awk -F: '{print $2}' | xargs || echo "")
-        DISK_SIZE=$(grep "User Capacity:" "$DRIVE_DIR/general_disk_info.txt" | head -1 | awk -F: '{print $2}' | xargs || echo "")
+        DISK_SIZE=$(grep "User Capacity:" "$DRIVE_DIR/general_disk_info.txt" | head -1 | awk -F: '{print $2}' | sed 's/.*\[\(.*\)\]/\1/' | xargs || echo "")
         DISK_PTUUID=$(basename "$DRIVE_DIR")
         
         # Get most recent SMART report
@@ -58,7 +59,7 @@ for LINK in *; do
         done
         PARTITION_DETAILS=${PARTITION_DETAILS%; } # Remove trailing semicolon and space
         
-        echo "\"$DISK_MODEL\",\"$DISK_SERIAL\",\"$DISK_SIZE\",\"$DISK_PTUUID\",\"$OVERALL_HEALTH\",\"$NUM_PARTITIONS\",\"$PARTITION_DETAILS\"" >> "$OUTPUT_CSV"
+        echo "\"$LINK_NAME\",\"$DISK_MODEL\",\"$DISK_SERIAL\",\"$DISK_SIZE\",\"$DISK_PTUUID\",\"$OVERALL_HEALTH\",\"$NUM_PARTITIONS\",\"$PARTITION_DETAILS\"" >> "$OUTPUT_CSV"
     fi
 done
 
@@ -67,6 +68,18 @@ done
 ########################################
 
 echo
-column -s, -t < "$OUTPUT_CSV"
+# Use Python to properly format CSV with quoted fields
+python3 << 'EOF'
+import csv
+with open("drive_summary.csv", "r") as f:
+    reader = csv.reader(f)
+    rows = list(reader)
+    if rows:
+        # Calculate column widths
+        widths = [max(len(str(row[i])) for row in rows) for i in range(len(rows[0]))]
+        # Print each row with proper spacing
+        for row in rows:
+            print("  ".join(str(cell).ljust(width) for cell, width in zip(row, widths)))
+EOF
 echo
 echo "Drive summary written to $OUTPUT_CSV"
