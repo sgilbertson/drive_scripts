@@ -101,3 +101,11 @@ It looks for all the symbolic links in the reports/ directory and creates a row 
 for each drive, with key information such as disk model, serial number, size, health status, etc.
 
 The resulting file, `drive_summary.csv` can be imported into a spreadsheet or otherwise manipulated.
+
+# compare_all_drives.sh
+
+After collecting drive data for multiple drives and partitions using `get_drive_info.sh`, this script compares the file lists for each pair of partitions, looking for differences and similarities.
+It creates a CSV file indicating for each pair or partitions how many files are only in the first one, only in the second one, or on both.
+It also prints a list of the top ten pairs with the most files in common.
+
+Important: It can take a very long time to run, if you have a lot of partitions and/or a lot of files per partition.
