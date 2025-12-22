@@ -7,7 +7,7 @@ set -euo pipefail
 
 OUTPUT_CSV="drive_comparison.csv"
 
-echo "Drive 1,Partition 1,Drive 2,Partition 2,Only in Drive 1,Only in Drive 2,In Both" > "$OUTPUT_CSV"
+echo "\"Drive 1\",\"Partition 1\",\"Drive 2\",\"Partition 2\",\"Only in Drive 1\",\"Only in Drive 2\",\"In Both\"" > "$OUTPUT_CSV"
 
 # Get all *all_files.txt files
 FILES=(*/*all_files.txt)
@@ -15,6 +15,11 @@ FILES=(*/*all_files.txt)
 echo "Found ${#FILES[@]} drive partitions to compare"
 echo "This will generate $((${#FILES[@]} * (${#FILES[@]} - 1) / 2)) comparisons"
 echo
+
+# Track timing and comparison count
+START_TIME=$SECONDS
+COMPARISON_NUM=0
+TOTAL_COMPARISONS=$((${#FILES[@]} * (${#FILES[@]} - 1) / 2))
 
 # Compare each pair
 for ((i=0; i<${#FILES[@]}; i++)); do
@@ -40,7 +45,13 @@ for ((i=0; i<${#FILES[@]}; i++)); do
         DRIVE2=$(dirname "$FILE2")
         PART2=$(basename "$FILE2" | sed 's/partition_\(.*\)_all_files.txt/\1/')
         
-        echo -ne "\rComparing $DRIVE1 (part $PART1) vs $DRIVE2 (part $PART2)...                    "
+        COMPARISON_NUM=$((COMPARISON_NUM + 1))
+        ELAPSED=$((SECONDS - START_TIME))
+        HOURS=$((ELAPSED / 3600))
+        MINUTES=$(((ELAPSED % 3600) / 60))
+        SECS=$((ELAPSED % 60))
+        printf "\r%02d:%02d:%02d #%d/%d Comparing %s (part %s) vs %s (part %s)...                    " \
+               $HOURS $MINUTES $SECS $COMPARISON_NUM $TOTAL_COMPARISONS "$DRIVE1" "$PART1" "$DRIVE2" "$PART2"
         
         # Extract mount point from FILE2
         MOUNT2=$(head -1 "$FILE2")
@@ -82,9 +93,10 @@ for ((i=0; i<${#FILES[@]}; i++)); do
     done
 done
 
-echo -e "\rComparison complete!                                                      "
+echo -e "\rComparison complete!                                                                                    "
 echo
 echo "Results written to $OUTPUT_CSV"
 echo
 echo "Top 10 drive pairs with most files in common:"
-tail -n +2 "$OUTPUT_CSV" | sort -t, -k7 -rn | head -10 | column -t -s,
+# Combine header with top 10 rows and format with column
+{ head -1 "$OUTPUT_CSV"; tail -n +2 "$OUTPUT_CSV" | sort -t, -k7 -rn | head -10; } | column -t -s,
